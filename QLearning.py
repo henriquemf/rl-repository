@@ -31,7 +31,7 @@ class QLearning:
     def train(self, filename, plotFile):
         actions_per_episode = []
         for i in range(1, self.episodes+1):
-            (state, _) = self.env.reset()
+            state, _ = self.env.reset()
             rewards = 0
             done = False
             actions = 0
@@ -67,5 +67,12 @@ class QLearning:
         plt.xlabel('Episodes')
         plt.ylabel('# Actions')
         plt.title('# Actions vs Episodes')
+        plt.legend()
         plt.savefig(plotFile+".jpg")     
         plt.close()
+
+    def update(self, state, action, next_state, reward, done):
+        old_value = self.q_table[state, action]
+        next_max = np.max(self.q_table[next_state])
+        new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
+        self.q_table[state, action] = new_value

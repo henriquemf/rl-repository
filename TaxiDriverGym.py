@@ -5,6 +5,7 @@ import numpy as np
 from QLearning import QLearning
 from numpy import loadtxt
 from time import sleep
+import matplotlib.pyplot as plt
 
 env = gym.make("Taxi-v3", render_mode='ansi').env
 
