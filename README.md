@@ -1,4 +1,4 @@
-#Reinforcement Learning - Repository
+# Reinforcement Learning - Repository
 
-##Feito por:
+## Feito por:
 - Henrique Martinelli Frezzatti
