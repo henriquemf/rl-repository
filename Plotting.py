@@ -4,6 +4,7 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 from QLearning import QLearning 
+import seaborn as sns
 
 env = gym.make("Taxi-v3", render_mode='ansi').env
 
@@ -31,9 +32,8 @@ def train_and_track_rewards(env, qlearn_params):
             agent.update(state, action, next_state, reward, done) 
             state = next_state
             rewards += reward
-
+            
         rewards_history.append(rewards)
-
     return rewards_history
 
 episodes = 10000
