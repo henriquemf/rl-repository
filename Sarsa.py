@@ -4,13 +4,13 @@ import random
 from numpy import savetxt
 import sys
 import matplotlib.pyplot as plt
-import seaborn as sns
+
 #
 # This class implements the Q Learning algorithm.
 # We can use this implementation to solve Toy text environments from Gym project. 
 #
 
-class QLearning:
+class Sarsa:
 
     def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_dec, episodes):
         self.env = env
@@ -21,7 +21,6 @@ class QLearning:
         self.epsilon_min = epsilon_min
         self.epsilon_dec = epsilon_dec
         self.episodes = episodes
-        self.q_table_memo = []
 
     def select_action(self, state):
         rv = random.uniform(0, 1)
@@ -37,22 +36,21 @@ class QLearning:
             rewards = 0
             done = False
             actions = 0
+            action = self.select_action(state)
             reward_episode = 0
 
             while not done:
-                action = self.select_action(state)
                 next_state, reward, done, truncated, _ = self.env.step(action) 
                 reward_episode += reward
-        
-                # Adjust Q value for current state
                 old_value = self.q_table[state, action]
-                next_max = np.max(self.q_table[next_state])
-                new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
+                next_action = self.select_action(next_state)
+                new_value = old_value + self.alpha * (reward + self.gamma * self.q_table[next_state, next_action] - old_value)
                 self.q_table[state, action] = new_value
                 
                 state = next_state
                 actions += 1
-            
+                action = next_action
+
             rewards_per_episode.append(reward_episode)
             actions_per_episode.append(actions)
 
@@ -62,9 +60,6 @@ class QLearning:
             
             if self.epsilon > self.epsilon_min:
                 self.epsilon = self.epsilon * self.epsilon_dec
-            
-            if i == 1 or i == 5000 or i == self.episodes:
-                self.q_table_memo.append(self.q_table.copy())
 
         savetxt(filename, self.q_table, delimiter=',')
         if (plotFile is not None): self.plotactions(plotFile, rewards_per_episode)
@@ -79,35 +74,18 @@ class QLearning:
         window = 50
         cumsum = np.cumsum(np.insert(rewards_per_episode, 0, 0))
         moving_avg = (cumsum[window:] - cumsum[:-window]) / window
-        plt.plot(moving_avg, label='Q-Learning')
+        plt.plot(moving_avg, label='Sarsa')
         plt.xlabel('Episodes')
         plt.ylabel('# Rewards')
-        plt.title('# QLearning - Rewards vs Episodes')
+        plt.title('# SARSA - Rewards vs Episodes')
         plt.legend()
         plt.savefig(plotFile+".jpg")     
         plt.close()
-        self.plot_q_table()
         return moving_avg
 
     def update(self, state, action, next_state, reward, done):
         old_value = self.q_table[state, action]
         next_max = np.max(self.q_table[next_state])
-        new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
+        next_action = self.select_action(next_state)
+        new_value = old_value + self.alpha * (reward + self.gamma * self.q_table[next_state, next_action] - old_value)
         self.q_table[state, action] = new_value
-
-    def plot_q_table(self):
-        if len(self.q_table_memo) >= 3:
-            fig, ax = plt.subplots(ncols=3)
-            for i in range(3):
-                ax[i] = sns.heatmap(self.q_table_memo[i][0: 8, :], ax=ax[i], cmap="BuPu")
-                ax[i].set_xlabel("Actions")
-                ax[i].set_ylabel("States")
-            ax[0].set_title("Q-Table Initial")
-            ax[1].set_title("Q-Table Middle")
-            ax[2].set_title("Q-Table Final")
-            plt.tight_layout()
-            plt.savefig("results/q-table-heatmap.jpg", dpi=300)
-            plt.close()
-        else:
-            print("Not enough Q-table snapshots for visualization.")
-        

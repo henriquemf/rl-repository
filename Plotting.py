@@ -4,52 +4,46 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 from QLearning import QLearning 
-import seaborn as sns
+from Sarsa import Sarsa
+
+# ------------------ TAXI DRIVER ------------------
 
 env = gym.make("Taxi-v3", render_mode='ansi').env
 
-variations = [
-    {'alpha': 0.1, 'gamma': 0.9, 'epsilon': 0.7}, 
-    {'alpha': 0.3, 'gamma': 0.95, 'epsilon': 0.8}, 
-    {'alpha': 0.2, 'gamma': 0.85, 'epsilon': 0.6}  
-]
+qlearn = QLearning(env, alpha=0.1, gamma=0.99, epsilon=0.1, epsilon_min=0.1, epsilon_dec=1, episodes=5000)
+sarsa = Sarsa(env, alpha=0.1, gamma=0.99, epsilon=0.1, epsilon_min=0.1, epsilon_dec=1, episodes=5000)
 
-def train_and_track_rewards(env, qlearn_params):
-    qlearn_params.setdefault('epsilon_min', 0.01)  
-    qlearn_params.setdefault('epsilon_dec', 0.99)
-    qlearn_params.setdefault('episodes', 10000)
-
-    agent = QLearning(env, **qlearn_params)
-    rewards_history = []
-    for i in range(1, episodes+1):
-        state, _ = env.reset()
-        rewards = 0
-        done = False
-
-        while not done:
-            action = agent.select_action(state)
-            next_state, reward, done, truncated, _ = env.step(action) 
-            agent.update(state, action, next_state, reward, done) 
-            state = next_state
-            rewards += reward
-            
-        rewards_history.append(rewards)
-    return rewards_history
-
-episodes = 10000
-results = {}  
-
-for params in variations:
-    results[str(params)] = train_and_track_rewards(env, params)
+qtable_qlearn, moving_avg_qlearn = qlearn.train('data/taxi_ql_q_table.csv', 'results/taxi_ql_rewards.jpg')
+qtable_sarsa, moving_avg_sarsa = sarsa.train('data/taxi_sarsa_q_table.csv', 'results/taxi_sarsa_rewards.jpg')
 
 plt.figure(figsize=(10, 6))
-for label, rewards in results.items():
-    plt.plot(rewards, label=label)
-
+plt.plot(moving_avg_qlearn, label='QLearning')
+plt.plot(moving_avg_sarsa, label='Sarsa')
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
-plt.title('Rewards over Episodes with Hyperparameter Variations')
+plt.title('Rewards vs Episodes in Taxi Driver')
 plt.legend()
 plt.grid(True)
-plt.savefig('results/taxi_rewards_variations.jpg')
+plt.savefig('results/taxi_rewards_qlearning_sarsa.jpg')
+plt.show()
+
+# ------------------ CLIFF WALKING ------------------
+
+env = gym.make("CliffWalking-v0").env
+
+qlearn = QLearning(env, alpha=0.1, gamma=0.99, epsilon=0.1, epsilon_min=0.1, epsilon_dec=1, episodes=5000)
+sarsa = Sarsa(env, alpha=0.1, gamma=0.99, epsilon=0.1, epsilon_min=0.1, epsilon_dec=1, episodes=5000)
+
+qtable_qlearn, moving_avg_qlearn = qlearn.train('data/cliff_ql_q_table.csv', 'results/cliff_ql_rewards.jpg')
+qtable_sarsa, moving_avg_sarsa = sarsa.train('data/cliff_sarsa_q_table.csv', 'results/cliff_sarsa_rewards.jpg')
+
+plt.figure(figsize=(10, 6))
+plt.plot(moving_avg_qlearn, label='QLearning')
+plt.plot(moving_avg_sarsa, label='Sarsa')
+plt.xlabel('Episodes')
+plt.ylabel('Rewards')
+plt.title('Rewards vs Episodes in Cliff Walking')
+plt.legend()
+plt.grid(True)
+plt.savefig('results/cliff_rewards_qlearning_sarsa.jpg')
 plt.show()
